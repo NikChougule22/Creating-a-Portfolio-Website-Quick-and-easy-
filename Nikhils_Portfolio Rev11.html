@@ -1,0 +1,2013 @@
+<!-- SECTION 1: HTML Head + CSS + Navigation + Color Palette System -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Builder - Color Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary)',
+                        secondary: 'var(--secondary)',
+                        'bg-dark': 'var(--bg-dark)',
+                        'bg-panel': 'var(--bg-panel)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #FF3366;
+            --secondary: #6C5CE7;
+            --bg-dark: #0a0a0a;
+            --bg-panel: rgba(26, 26, 26, 0.7);
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        
+        .glass-panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .step-active { 
+            border-color: var(--primary); 
+            background: rgba(255, 51, 102, 0.1); 
+        }
+        
+        .step-completed { border-color: #10B981; }
+        
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .media-item {
+            position: relative;
+            aspect-ratio: 16/9;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .media-item:hover {
+            border-color: var(--primary);
+        }
+        
+        .media-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .badge-video { background: #FF3366; }
+        .badge-gif { background: #6C5CE7; }
+        .badge-image { background: #10B981; }
+        
+        .remove-media {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(239, 68, 68, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .media-item:hover .remove-media {
+            opacity: 1;
+        }
+        
+        .hosting-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .hosting-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+        
+        .hosting-card.selected {
+            border-color: var(--primary);
+            background: rgba(255, 51, 102, 0.05);
+        }
+        
+        .error-message {
+            color: #EF4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin-top: 1rem;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 51, 102, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(255, 51, 102, 0.6); }
+        }
+        
+        .download-ready {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        /* Color Palette Styles */
+        .palette-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .palette-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .palette-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 51, 102, 0.2);
+        }
+        
+        .palette-colors {
+            display: flex;
+            height: 80px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .palette-color {
+            flex: 1;
+            position: relative;
+        }
+        
+        .palette-color:hover::after {
+            content: attr(data-color);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            font-size: 10px;
+            padding: 2px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="font-display font-bold text-2xl tracking-tighter">
+                PORTFOLIO<span style="color: var(--primary)">.</span><span class="text-sm font-normal text-gray-400 ml-2">BUILDER</span>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="showSection('editor')" class="px-4 py-2 rounded-lg hover:bg-white/5 transition-all text-sm font-medium" id="nav-editor">
+                    <i class="fas fa-edit mr-2"></i>Edit Content
+                </button>
+                <button onclick="showSection('deploy')" class="px-4 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-all text-sm font-medium" id="nav-deploy">
+                    <i class="fas fa-rocket mr-2"></i>Deploy Site
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- EDITOR SECTION -->
+    <div id="editor-section" class="pt-24 pb-20 px-6">
+        
+        <!-- Color Palette Selector -->
+        <div class="max-w-6xl mx-auto">
+            <div class="glass-panel rounded-2xl p-6 md:p-8 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold font-display">Choose Color Theme</h2>
+                    <span class="text-sm text-gray-400" id="current-theme-name">Current: Sunset Boulevard</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="palette-grid"></div>
+                <div class="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
+                    <p class="text-sm text-gray-400">
+                        <i class="fas fa-info-circle mr-2" style="color: var(--primary)"></i>
+                        Select a color palette to instantly preview the theme. This applies to your entire portfolio.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Storage Warning -->
+            <div class="glass-panel rounded-xl p-4 mb-8 border border-yellow-500/30 bg-yellow-500/10">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-yellow-400"><i class="fas fa-hdd mr-2"></i>Storage Used</span>
+                    <span id="storage-indicator" class="text-sm font-bold text-yellow-400">Checking...</span>
+                </div>
+                <div class="w-full bg-white/10 rounded-full h-2">
+                    <div id="storage-bar" class="bg-yellow-400 h-full rounded-full transition-all" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-400 mt-2" id="storage-message">Maximum 5MB for all images combined</p>
+            </div>
+
+            <div class="text-center mb-12">
+                <h1 class="font-display text-4xl md:text-5xl font-bold mb-4">Build Your <span class="gradient-text">Portfolio</span></h1>
+                <p class="text-gray-400 max-w-2xl mx-auto">Add images, videos, and GIFs to showcase your projects.</p>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="glass-panel rounded-2xl p-6 md:p-8 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold font-display">Content Editor</h2>
+                    <button onclick="previewSite()" class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-all">
+                        <i class="fas fa-eye mr-2"></i>Preview
+                    </button>
+                </div>
+
+                <!-- Profile -->
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold flex items-center gap-2" style="color: var(--primary)">
+                            <i class="fas fa-user"></i> Profile
+                        </h3>
+                        <input type="text" id="editName" placeholder="Your Name" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="text" id="editTitle" placeholder="Professional Title" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <textarea id="editBio" placeholder="Bio" rows="3" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none resize-none"></textarea>
+                        <input type="email" id="editEmail" placeholder="Contact Email" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="url" id="editLinkedIn" placeholder="LinkedIn URL (https://linkedin.com/in/...)" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold flex items-center gap-2" style="color: var(--secondary)">
+                            <i class="fas fa-star"></i> Skills
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="newSkill" placeholder="Add Skill" class="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none" onkeypress="if(event.key==='Enter')addSkill()">
+                            <button onclick="addSkill()" class="px-4 bg-white/10 hover:bg-white/20 rounded-lg transition-all">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="skillsList" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Experience -->
+                <div class="border-t border-white/10 pt-8 mb-8">
+                    <h3 class="text-lg font-semibold flex items-center gap-2 mb-4" style="color: var(--secondary)">
+                        <i class="fas fa-briefcase"></i> Experience
+                    </h3>
+                    <div class="grid md:grid-cols-4 gap-4 mb-4">
+                        <input type="text" id="expRole" placeholder="Role" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="text" id="expCompany" placeholder="Company" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="text" id="expDate" placeholder="Date Range" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <button onclick="addExperience()" class="px-4 py-3 rounded-lg font-medium transition-all" style="background-color: var(--secondary);">
+                            <i class="fas fa-plus mr-2"></i>Add
+                        </button>
+                    </div>
+                    <textarea id="expDesc" placeholder="Description" rows="2" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none resize-none mb-4"></textarea>
+                    <div id="experienceList" class="space-y-3"></div>
+                </div>
+
+                <!-- Projects -->
+                <div class="border-t border-white/10 pt-8">
+                    <h3 class="text-lg font-semibold flex items-center gap-2 mb-4" style="color: var(--primary)">
+                        <i class="fas fa-photo-video"></i> Projects
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="space-y-4">
+                            <input type="text" id="projTitle" placeholder="Project Title" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none" oninput="updateSlug()">
+                            <input type="text" id="projSlug" placeholder="URL Slug" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                            <textarea id="projDesc" placeholder="Short Description" rows="2" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none resize-none"></textarea>
+                            <textarea id="projFullDesc" placeholder="Full Description" rows="4" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none resize-none"></textarea>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-400 mb-2 block">Featured Media</label>
+                                <input type="file" id="projFeatured" accept="image/*,video/*,.gif" class="hidden" onchange="handleFeaturedMedia(this)">
+                                <div onclick="document.getElementById('projFeatured').click()" class="cursor-pointer h-40 rounded-lg bg-white/5 border-2 border-dashed border-white/20 hover:border-primary flex items-center justify-center overflow-hidden relative" id="featuredPreview">
+                                    <div class="text-center text-gray-500">
+                                        <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                                        <p class="text-sm">Click to upload</p>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-yellow-500 mt-2" id="featuredSize"></p>
+                            </div>
+
+                            <div>
+                                <label class="text-sm text-gray-400 mb-2 block">Media Gallery</label>
+                                <input type="file" id="projGallery" accept="image/*,video/*,.gif" multiple class="hidden" onchange="handleGalleryMedia(this)">
+                                <button onclick="document.getElementById('projGallery').click()" class="w-full py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-sm transition-all">
+                                    <i class="fas fa-plus-circle mr-2"></i>Add Media Files
+                                </button>
+                                <div id="galleryPreview" class="media-grid mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="projTech" placeholder="Technologies (comma separated)" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="url" id="projGithub" placeholder="GitHub URL" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="url" id="projLive" placeholder="Live Demo URL (optional)" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                        <input type="url" id="projYoutube" placeholder="YouTube Video URL (optional)" class="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-primary outline-none">
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4"><i class="fas fa-info-circle mr-2" style="color: var(--primary)"></i>Add a YouTube URL to embed a video directly in your project page</p>
+                    
+                    <div class="flex items-center gap-3 mb-6">
+                        <input type="checkbox" id="projHasPage" checked class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary">
+                        <label for="projHasPage" class="text-sm text-gray-300">Create dedicated project page</label>
+                    </div>
+                    
+                    <button onclick="addProject()" class="w-full py-3 rounded-lg font-medium transition-all" style="background-color: var(--primary);">
+                        <i class="fas fa-plus mr-2"></i>Add Project
+                    </button>
+                    
+                    <div id="projectsList" class="grid md:grid-cols-2 gap-4 mt-6"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="border-t border-white/10 pt-8 mt-8 flex gap-4">
+                    <button onclick="exportData()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all">
+                        <i class="fas fa-download mr-2"></i>Save Backup
+                    </button>
+                    <label class="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all text-center cursor-pointer">
+                        <i class="fas fa-upload mr-2"></i>Load Backup
+                        <input type="file" class="hidden" accept=".json" onchange="importData(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	
+	
+	
+<!-- SECTION 2: Deploy Section + Preview Modal + JavaScript Data & Utilities -->
+
+
+
+
+    <!-- DEPLOY SECTION -->
+    <div id="deploy-section" class="hidden pt-24 pb-20 px-6">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="font-display text-4xl md:text-5xl font-bold mb-4">Deploy Your <span class="gradient-text">Website</span></h1>
+                <p class="text-gray-400">Choose how you want to publish your portfolio.</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="flex justify-center mb-12">
+                <div class="flex items-center gap-4">
+                    <div class="step-active w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold" id="step1">1</div>
+                    <div class="w-16 h-0.5 bg-white/20"></div>
+                    <div class="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center font-bold text-gray-500" id="step2">2</div>
+                    <div class="w-16 h-0.5 bg-white/20"></div>
+                    <div class="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center font-bold text-gray-500" id="step3">3</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Choose Method -->
+            <div id="deploy-step-1" class="space-y-6">
+                <h2 class="text-2xl font-bold text-center mb-8">Choose Deployment Method</h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="hosting-card glass-panel p-6 rounded-xl border border-white/10" data-method="netlify" onclick="selectDeploy('netlify', this)">
+                        <div class="w-12 h-12 rounded-lg bg-[#00C7B7]/20 flex items-center justify-center mb-4 text-[#00C7B7] text-2xl">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Netlify Drop</h3>
+                        <p class="text-sm text-gray-400 mb-4">Drag & drop. Free custom domain.</p>
+                        <div class="text-xs text-[#00C7B7] font-medium">Easiest</div>
+                    </div>
+
+                    <div class="hosting-card glass-panel p-6 rounded-xl border border-white/10" data-method="github" onclick="selectDeploy('github', this)">
+                        <div class="w-12 h-12 rounded-lg bg-gray-700 flex items-center justify-center mb-4 text-white text-2xl">
+                            <i class="fab fa-github"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">GitHub Pages</h3>
+                        <p class="text-sm text-gray-400 mb-4">Free hosting from GitHub.</p>
+                        <div class="text-xs text-gray-400 font-medium">Version Control</div>
+                    </div>
+
+                    <div class="hosting-card glass-panel p-6 rounded-xl border border-white/10" data-method="download" onclick="selectDeploy('download', this)">
+                        <div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4 text-primary text-2xl">
+                            <i class="fas fa-file-archive"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Download ZIP</h3>
+                        <p class="text-sm text-gray-400 mb-4">Upload anywhere you want.</p>
+                        <div class="text-xs font-medium" style="color: var(--primary)">Flexible</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Generate & Download -->
+            <div id="deploy-step-2" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold text-center mb-8">Download Your Site</h2>
+                
+                <div class="glass-panel p-8 rounded-xl border border-white/10 text-center max-w-2xl mx-auto">
+                    <!-- Loading State -->
+                    <div id="generate-status" class="mb-6">
+                        <div class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 text-primary text-4xl animate-pulse">
+                            <i class="fas fa-cog fa-spin"></i>
+                        </div>
+                        <p class="text-xl font-medium mb-2">Building your website...</p>
+                        <p class="text-sm text-gray-400" id="generate-detail">Preparing files...</p>
+                        <div class="w-full bg-white/10 rounded-full h-2 mt-4 max-w-md mx-auto overflow-hidden">
+                            <div id="progress-bar" class="h-full transition-all duration-300" style="width: 0%; background-color: var(--primary)"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Error State -->
+                    <div id="generate-error" class="error-message hidden text-left">
+                        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Error</p>
+                        <p id="error-text" class="text-sm"></p>
+                        <button onclick="resetDeploy()" class="mt-4 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all w-full">
+                            Try Again
+                        </button>
+                    </div>
+                    
+                    <!-- Success State with DOWNLOAD BUTTON -->
+                    <div id="generate-complete" class="hidden">
+                        <div class="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6 text-green-500 text-4xl">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Your site is ready!</h3>
+                        <p class="text-gray-400 mb-6" id="download-info"></p>
+                        
+                        <!-- BIG DOWNLOAD BUTTON -->
+                        <button onclick="downloadSite()" class="download-ready w-full py-5 rounded-xl font-bold text-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3 mb-4 text-white" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);">
+                            <i class="fas fa-download text-2xl"></i>
+                            <span>Download ZIP File</span>
+                        </button>
+                        
+                        <p class="text-xs text-gray-500 mb-6">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            The ZIP contains all your HTML files and embedded media
+                        </p>
+                        
+                        <!-- Next Step Button -->
+                        <button onclick="showStep3()" class="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg transition-all text-sm">
+                            I've downloaded the file → Show deployment instructions
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button onclick="resetDeploy()" class="text-gray-400 hover:text-white text-sm flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>Choose different method
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Instructions -->
+            <div id="deploy-step-3" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold text-center mb-8">How to Deploy to <span id="platform-name">Netlify</span></h2>
+                
+                <div class="glass-panel p-8 rounded-xl border border-white/10 max-w-2xl mx-auto space-y-6">
+                    <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                        <i class="fas fa-file-zipper text-3xl text-primary"></i>
+                        <div>
+                            <p class="font-medium">Your file: <span class="text-primary">my-portfolio-website.zip</span></p>
+                            <p class="text-sm text-gray-400">Extract this file to get your website folder</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4" id="instructions-netlify">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">1</div>
+                            <div>
+                                <p class="font-medium text-lg">Extract the ZIP file</p>
+                                <p class="text-sm text-gray-400">Right-click → "Extract All" (Windows) or double-click (Mac)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">2</div>
+                            <div>
+                                <p class="font-medium text-lg">Go to <a href="https://app.netlify.com/drop" target="_blank" class="text-primary hover:underline">app.netlify.com/drop</a></p>
+                                <p class="text-sm text-gray-400">No account needed, but creating one lets you manage the site later</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">3</div>
+                            <div>
+                                <p class="font-medium text-lg">Drag the extracted folder to Netlify</p>
+                                <p class="text-sm text-gray-400">Your site will be live instantly with a free .netlify.app URL</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 hidden" id="instructions-github">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">1</div>
+                            <div>
+                                <p class="font-medium text-lg">Extract the ZIP file</p>
+                                <p class="text-sm text-gray-400">You should see index.html and other files</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">2</div>
+                            <div>
+                                <p class="font-medium text-lg">Create GitHub repository</p>
+                                <p class="text-sm text-gray-400">Name it <code>yourusername.github.io</code> for main site</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">3</div>
+                            <div>
+                                <p class="font-medium text-lg">Upload files to repository</p>
+                                <p class="text-sm text-gray-400">Enable GitHub Pages in Settings → Pages</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 hidden" id="instructions-download">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">1</div>
+                            <div>
+                                <p class="font-medium text-lg">Extract the ZIP file</p>
+                                <p class="text-sm text-gray-400">You'll get a folder with all website files</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary font-bold">2</div>
+                            <div>
+                                <p class="font-medium text-lg">Upload to any web host</p>
+                                <p class="text-sm text-gray-400">Works with Vercel, Surge, Firebase, cPanel, FTP, etc.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mt-6">
+                        <p class="text-green-400 text-sm flex items-center gap-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Your portfolio is ready to go live!</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="resetDeploy()" class="px-6 py-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all">
+                        Deploy Another Way
+                    </button>
+                    <button onclick="showSection('editor')" class="px-6 py-3 rounded-lg transition-all text-white" style="background-color: var(--primary);">
+                        Back to Editor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-sm">
+        <div class="absolute inset-4 md:inset-10 bg-[#0a0a0a] rounded-2xl overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-white/10 bg-[#1a1a1a]">
+                <h3 class="font-bold">Live Preview</h3>
+                <button onclick="closePreview()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <iframe id="preview-frame" class="flex-1 w-full border-none" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // ========== COLOR PALETTE SYSTEM ==========
+        const colorPalettes = [
+            {
+                id: 'sunset',
+                name: 'Sunset Boulevard',
+                colors: ['#FF3366', '#6C5CE7', '#0a0a0a', '#1a1a1a', '#ffffff'],
+                primary: '#FF3366',
+                secondary: '#6C5CE7',
+                bgDark: '#0a0a0a',
+                bgPanel: 'rgba(26, 26, 26, 0.7)',
+                description: 'Vibrant pink to purple - energetic and modern'
+            },
+            {
+                id: 'oceanic',
+                name: 'Oceanic Mist',
+                colors: ['#E0FBFC', '#C2DFE3', '#9DB4C0', '#5C6B73', '#253237'],
+                primary: '#5C6B73',
+                secondary: '#9DB4C0',
+                bgDark: '#253237',
+                bgPanel: 'rgba(37, 50, 55, 0.9)',
+                description: 'Cool, professional, calming blue-gray tones'
+            },
+            {
+                id: 'forest',
+                name: 'Deep Forest',
+                colors: ['#2D6A4F', '#40916C', '#52B788', '#74C69D', '#D8F3DC'],
+                primary: '#40916C',
+                secondary: '#52B788',
+                bgDark: '#1B4332',
+                bgPanel: 'rgba(27, 67, 50, 0.9)',
+                description: 'Natural greens - organic and trustworthy'
+            },
+            {
+                id: 'midnight',
+                name: 'Midnight Gold',
+                colors: ['#FFD700', '#FFA500', '#1a1a2e', '#16213e', '#0f3460'],
+                primary: '#FFD700',
+                secondary: '#FFA500',
+                bgDark: '#1a1a2e',
+                bgPanel: 'rgba(22, 33, 62, 0.9)',
+                description: 'Luxurious gold on navy - premium feel'
+            },
+            {
+                id: 'berry',
+                name: 'Berry Crush',
+                colors: ['#FF006E', '#8338EC', '#3A86FF', '#FB5607', '#FFBE0B'],
+                primary: '#FF006E',
+                secondary: '#8338EC',
+                bgDark: '#1a0b2e',
+                bgPanel: 'rgba(26, 11, 46, 0.9)',
+                description: 'Bold and playful - creative and artistic'
+            },
+            {
+                id: 'monochrome',
+                name: 'Mono Chrome',
+                colors: ['#F8F9FA', '#E9ECEF', '#DEE2E6', '#CED4DA', '#ADB5BD', '#495057', '#212529'],
+                primary: '#ADB5BD',
+                secondary: '#6C757D',
+                bgDark: '#212529',
+                bgPanel: 'rgba(33, 37, 41, 0.95)',
+                description: 'Clean grayscale - minimalist and elegant'
+            },
+            {
+                id: 'coral',
+                name: 'Coral Reef',
+                colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'],
+                primary: '#FF6B6B',
+                secondary: '#4ECDC4',
+                bgDark: '#2C3E50',
+                bgPanel: 'rgba(44, 62, 80, 0.9)',
+                description: 'Warm coral with teal - friendly and inviting'
+            },
+            {
+                id: 'neon',
+                name: 'Cyber Neon',
+                colors: ['#00F5FF', '#FF00FF', '#FFFF00', '#1a1a1a', '#000000'],
+                primary: '#00F5FF',
+                secondary: '#FF00FF',
+                bgDark: '#0a0a0a',
+                bgPanel: 'rgba(20, 20, 20, 0.95)',
+                description: 'High contrast neon - futuristic and tech'
+            },
+            {
+                id: 'terracotta',
+                name: 'Terracotta Warmth',
+                colors: ['#E07A5F', '#F2CC8F', '#81B29A', '#3D405B', '#F4F1DE'],
+                primary: '#E07A5F',
+                secondary: '#81B29A',
+                bgDark: '#3D405B',
+                bgPanel: 'rgba(61, 64, 91, 0.9)',
+                description: 'Earthy warm tones - approachable and warm'
+            }
+        ];
+
+        let currentPalette = colorPalettes[0];
+
+        // Data Storage
+        let portfolioData = {
+            profile: { name: '', title: '', bio: '', email: '', linkedin: '' },
+            skills: [],
+            experience: [],
+            projects: []
+        };
+
+        let currentProject = {
+            featured: null,
+            gallery: []
+        };
+
+        let selectedDeployMethod = null;
+        let generatedZipBlob = null;
+
+        // Initialize
+        function init() {
+            try {
+                const saved = localStorage.getItem('portfolioData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    portfolioData = parsed;
+                    if (parsed.paletteId) {
+                        const savedPalette = colorPalettes.find(p => p.id === parsed.paletteId);
+                        if (savedPalette) {
+                            currentPalette = savedPalette;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading saved data:', e);
+            }
+            
+            applyPalette(currentPalette);
+            renderPalettes();
+            renderAll();
+            updateStorageIndicator();
+        }
+
+        function saveData() {
+            try {
+                portfolioData.paletteId = currentPalette.id;
+                localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+                updateStorageIndicator();
+            } catch (e) {
+                console.error('Error saving:', e);
+                if (e.name === 'QuotaExceededError') {
+                    alert('Warning: Storage full! Remove some images or projects.');
+                }
+            }
+            renderAll();
+        }
+
+        // Storage indicator
+        function updateStorageIndicator() {
+            try {
+                const dataStr = JSON.stringify(portfolioData);
+                const size = new Blob([dataStr]).size;
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                const percent = Math.min((size / maxSize) * 100, 100);
+                
+                const indicator = document.getElementById('storage-indicator');
+                const bar = document.getElementById('storage-bar');
+                const message = document.getElementById('storage-message');
+                
+                if (indicator && bar) {
+                    const sizeMB = (size / (1024 * 1024)).toFixed(2);
+                    indicator.textContent = `${sizeMB} MB / 5 MB (${Math.round(percent)}%)`;
+                    bar.style.width = `${percent}%`;
+                    
+                    if (percent > 90) {
+                        bar.classList.remove('bg-yellow-400');
+                        bar.classList.add('bg-red-500');
+                        message.textContent = '⚠️ Storage almost full! Remove items to free space.';
+                        message.classList.add('text-red-400');
+                    } else if (percent > 70) {
+                        bar.classList.remove('bg-yellow-400', 'bg-red-500');
+                        bar.classList.add('bg-orange-400');
+                        message.textContent = 'Storage getting full. Consider optimizing images.';
+                    } else {
+                        bar.classList.remove('bg-red-500', 'bg-orange-400');
+                        bar.classList.add('bg-yellow-400');
+                        message.textContent = 'Maximum 5MB for all images combined';
+                        message.classList.remove('text-red-400');
+                    }
+                }
+            } catch (e) {
+                console.error('Error updating storage indicator:', e);
+            }
+        }
+
+        // Image compression utility
+        function compressImage(file, maxWidth = 1200, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const compressed = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressed);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Palette Functions
+        function renderPalettes() {
+            const grid = document.getElementById('palette-grid');
+            if (!grid) return;
+            
+            grid.innerHTML = colorPalettes.map(palette => `
+                <div class="palette-card glass-panel rounded-xl p-4 ${palette.id === currentPalette.id ? 'selected' : ''}" 
+                     onclick="selectPalette('${palette.id}')"
+                     data-palette-id="${palette.id}">
+                    <div class="palette-colors mb-3">
+                        ${palette.colors.map(color => `
+                            <div class="palette-color" style="background-color: ${color}" data-color="${color}"></div>
+                        `).join('')}
+                    </div>
+                    <h3 class="font-bold text-lg mb-1">${palette.name}</h3>
+                    <p class="text-sm text-gray-400">${palette.description}</p>
+                </div>
+            `).join('');
+        }
+
+        function selectPalette(paletteId) {
+            const palette = colorPalettes.find(p => p.id === paletteId);
+            if (!palette) return;
+            
+            currentPalette = palette;
+            
+            document.querySelectorAll('.palette-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.dataset.paletteId === paletteId) {
+                    card.classList.add('selected');
+                }
+            });
+            
+            const themeNameEl = document.getElementById('current-theme-name');
+            if (themeNameEl) {
+                themeNameEl.textContent = `Current: ${palette.name}`;
+            }
+            
+            applyPalette(palette);
+            portfolioData.paletteId = currentPalette.id;
+            saveData();
+        }
+
+        function applyPalette(palette) {
+            const root = document.documentElement;
+            root.style.setProperty('--primary', palette.primary);
+            root.style.setProperty('--secondary', palette.secondary);
+            root.style.setProperty('--bg-dark', palette.bgDark);
+            root.style.setProperty('--bg-panel', palette.bgPanel);
+            document.body.style.backgroundColor = palette.bgDark;
+        }
+
+        // Navigation
+        function showSection(section) {
+            document.getElementById('editor-section').classList.add('hidden');
+            document.getElementById('deploy-section').classList.add('hidden');
+            document.getElementById('nav-editor').classList.remove('bg-white/10');
+            document.getElementById('nav-deploy').classList.remove('bg-white/10');
+            
+            document.getElementById(section + '-section').classList.remove('hidden');
+            document.getElementById('nav-' + section).classList.add('bg-white/10');
+        }
+
+        // Utility functions
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getMediaType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return 'video';
+            if (ext === 'gif') return 'gif';
+            return 'image';
+        }
+
+        // XSS Protection - Escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+		
+		
+		
+		
+
+<!-- SECTION 3: Media Handling + Rendering Functions + HTML Generators + Deployment -->
+
+
+
+
+
+
+        // Media Handling
+        async function handleFeaturedMedia(input) {
+            if (!input.files || !input.files[0]) return;
+            
+            const file = input.files[0];
+            
+            // CHECK 1: Warn if individual file is large
+            if (file.size > 2 * 1024 * 1024) {
+                if (!confirm(`⚠️ Large file (${formatSize(file.size)})\n\nThis may slow down your site. Continue anyway?`)) {
+                    input.value = '';
+                    return;
+                }
+            }
+            
+            // CHECK 2: Check total storage before adding
+            const currentSize = new Blob([JSON.stringify(portfolioData)]).size;
+            const projectedSize = currentSize + file.size;
+            const limit = 4.5 * 1024 * 1024; // 4.5MB safety limit
+            
+            if (projectedSize > limit) {
+                alert(`⚠️ Storage almost full!\n\nCurrent: ${formatSize(currentSize)}\nThis image: ${formatSize(file.size)}\nLimit: ~5MB\n\nTips:\n• Use smaller images (under 500KB)\n• Use fewer images per project\n• Compress images before uploading`);
+                input.value = '';
+                return;
+            }
+            
+            const type = getMediaType(file.name);
+            const sizeWarning = document.getElementById('featuredSize');
+            
+            // Skip compression for GIFs and small files
+            if (type === 'gif' || file.size < 500 * 1024) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentProject.featured = {
+                        data: e.target.result,
+                        type: type,
+                        name: file.name
+                    };
+                    renderFeaturedPreview();
+                    updateStorageIndicator();
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+            
+            // Compress large images
+            sizeWarning.innerHTML = '<span style="color: var(--primary)">Compressing...</span>';
+            
+            try {
+                const compressed = await compressImage(file, 1200, 0.8);
+                
+                currentProject.featured = {
+                    data: compressed,
+                    type: 'image',
+                    name: file.name.replace(/\.[^/.]+$/, '.jpg')
+                };
+                
+                const savedPercent = ((file.size - compressed.length) / file.size * 100).toFixed(0);
+                sizeWarning.innerHTML = 
+                    `<span style="color: var(--primary)">✓ Compressed ${formatSize(file.size)} → ${formatSize(compressed.length)} (${savedPercent}% saved)</span>`;
+                
+                renderFeaturedPreview();
+                updateStorageIndicator();
+            } catch (err) {
+                console.error('Compression failed:', err);
+                sizeWarning.textContent = 'Compression failed, using original';
+                
+                // Fallback to original
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentProject.featured = {
+                        data: e.target.result,
+                        type: type,
+                        name: file.name
+                    };
+                    renderFeaturedPreview();
+                    updateStorageIndicator();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderFeaturedPreview() {
+            const container = document.getElementById('featuredPreview');
+            const media = currentProject.featured;
+            
+            if (!media) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                        <p class="text-sm">Click to upload</p>
+                    </div>`;
+                return;
+            }
+            
+            let content = '';
+            if (media.type === 'video') {
+                content = `
+                    <video src="${media.data}" class="w-full h-full object-cover" muted loop></video>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: var(--primary)">
+                            <i class="fas fa-play text-white ml-1"></i>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content = `<img src="${media.data}" class="w-full h-full object-cover" alt="Preview">`;
+            }
+            
+            container.innerHTML = content;
+            container.classList.remove('border-dashed');
+        }
+
+        async function handleGalleryMedia(input) {
+            if (!input.files) return;
+            
+            // Check total size of new files
+            let newFilesSize = 0;
+            Array.from(input.files).forEach(f => newFilesSize += f.size);
+            
+            const currentSize = new Blob([JSON.stringify(portfolioData)]).size;
+            if (currentSize + newFilesSize > 4.5 * 1024 * 1024) {
+                alert(`⚠️ Not enough space for ${input.files.length} images!\n\nFree up space by removing other projects first.`);
+                input.value = '';
+                return;
+            }
+            
+            // Process each file
+            for (const file of Array.from(input.files)) {
+                const type = getMediaType(file.name);
+                
+                // Skip compression for GIFs and small files
+                if (type === 'gif' || file.size < 500 * 1024) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        currentProject.gallery.push({
+                            data: e.target.result,
+                            type: type,
+                            name: file.name,
+                            size: file.size
+                        });
+                        renderGalleryPreview();
+                        updateStorageIndicator();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Compress
+                    try {
+                        const compressed = await compressImage(file, 1200, 0.8);
+                        currentProject.gallery.push({
+                            data: compressed,
+                            type: 'image',
+                            name: file.name.replace(/\.[^/.]+$/, '.jpg'),
+                            size: compressed.length
+                        });
+                        renderGalleryPreview();
+                        updateStorageIndicator();
+                    } catch (err) {
+                        // Fallback
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            currentProject.gallery.push({
+                                data: e.target.result,
+                                type: type,
+                                name: file.name,
+                                size: file.size
+                            });
+                            renderGalleryPreview();
+                            updateStorageIndicator();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            }
+            
+            input.value = '';
+        }
+
+        function renderGalleryPreview() {
+            const container = document.getElementById('galleryPreview');
+            
+            container.innerHTML = currentProject.gallery.map((media, i) => {
+                let badgeClass = 'badge-image';
+                let badgeText = 'IMG';
+                let content = `<img src="${media.data}" class="w-full h-full object-cover" alt="">`;
+                
+                if (media.type === 'video') {
+                    badgeClass = 'badge-video';
+                    badgeText = 'VIDEO';
+                    content = `
+                        <video src="${media.data}" class="w-full h-full object-cover" muted></video>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <i class="fas fa-play text-white text-lg"></i>
+                        </div>
+                    `;
+                } else if (media.type === 'gif') {
+                    badgeClass = 'badge-gif';
+                    badgeText = 'GIF';
+                }
+                
+                return `
+                    <div class="media-item" onclick="playGalleryMedia(${i})">
+                        ${content}
+                        <span class="media-badge ${badgeClass}">${badgeText}</span>
+                        <button onclick="event.stopPropagation(); removeGalleryMedia(${i})" class="remove-media">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function playGalleryMedia(index) {
+            const media = currentProject.gallery[index];
+            if (media.type === 'video') {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <button onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-white text-2xl w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <video src="${media.data}" controls autoplay class="max-w-full max-h-[90vh] rounded-lg"></video>
+                `;
+                document.body.appendChild(modal);
+            }
+        }
+
+        function removeGalleryMedia(index) {
+            currentProject.gallery.splice(index, 1);
+            renderGalleryPreview();
+            updateStorageIndicator();
+        }
+
+        function updateSlug() {
+            const title = document.getElementById('projTitle').value;
+            const slug = title.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '');
+            document.getElementById('projSlug').value = slug;
+        }
+
+        // Rendering
+        function renderAll() {
+            document.getElementById('editName').value = portfolioData.profile.name;
+            document.getElementById('editTitle').value = portfolioData.profile.title;
+            document.getElementById('editBio').value = portfolioData.profile.bio;
+            document.getElementById('editEmail').value = portfolioData.profile.email;
+            document.getElementById('editLinkedIn').value = portfolioData.profile.linkedin || '';
+
+            document.getElementById('skillsList').innerHTML = portfolioData.skills.map((skill, i) => `
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm">
+                    ${escapeHtml(skill)}
+                    <button onclick="removeSkill(${i})" class="text-red-400 hover:text-red-300"><i class="fas fa-times text-xs"></i></button>
+                </span>
+            `).join('');
+
+            document.getElementById('experienceList').innerHTML = portfolioData.experience.map(exp => `
+                <div class="glass-panel p-4 rounded-lg border border-white/10 flex justify-between items-start">
+                    <div>
+                        <div class="font-bold">${escapeHtml(exp.role)}</div>
+                        <div class="text-sm" style="color: var(--secondary)">${escapeHtml(exp.company)} • ${escapeHtml(exp.date)}</div>
+                        <div class="text-sm text-gray-400 mt-1">${escapeHtml(exp.description)}</div>
+                    </div>
+                    <button onclick="deleteExperience(${exp.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            document.getElementById('projectsList').innerHTML = portfolioData.projects.map(proj => {
+                const hasMedia = proj.featured || (proj.gallery && proj.gallery.length > 0);
+                const mediaCount = (proj.gallery ? proj.gallery.length : 0) + (proj.featured ? 1 : 0);
+                
+                return `
+                <div class="glass-panel p-4 rounded-lg border border-white/10">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-bold">${escapeHtml(proj.title)}</h4>
+                            ${hasMedia ? `<span class="text-xs" style="color: var(--primary)"><i class="fas fa-photo-video mr-1"></i>${mediaCount} media</span>` : ''}
+                        </div>
+                        <button onclick="deleteProject(${proj.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-2 line-clamp-2">${escapeHtml(proj.description)}</p>
+                    <div class="flex gap-2 flex-wrap">
+                        ${proj.tech.slice(0, 3).map(t => `<span class="text-xs px-2 py-1 rounded bg-white/5">${escapeHtml(t)}</span>`).join('')}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // Live update
+        ['editName', 'editTitle', 'editBio', 'editEmail'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', (e) => {
+                    const field = id.replace('edit', '').toLowerCase();
+                    portfolioData.profile[field] = e.target.value;
+                    saveData();
+                });
+            }
+        });
+
+        const linkedInEl = document.getElementById('editLinkedIn');
+        if (linkedInEl) {
+            linkedInEl.addEventListener('input', (e) => {
+                portfolioData.profile.linkedin = e.target.value;
+                saveData();
+            });
+        }
+
+        // Skills
+        function addSkill() {
+            const input = document.getElementById('newSkill');
+            const skill = input.value.trim();
+            if (skill && !portfolioData.skills.includes(skill)) {
+                portfolioData.skills.push(skill);
+                input.value = '';
+                saveData();
+            }
+        }
+
+        function removeSkill(index) {
+            portfolioData.skills.splice(index, 1);
+            saveData();
+        }
+
+        // Experience
+        function addExperience() {
+            const role = document.getElementById('expRole').value.trim();
+            const company = document.getElementById('expCompany').value.trim();
+            const date = document.getElementById('expDate').value.trim();
+            const desc = document.getElementById('expDesc').value.trim();
+
+            if (!role || !company) return alert('Role and Company required');
+
+            portfolioData.experience.push({
+                id: Date.now(),
+                role, company, date: date || 'Present', description: desc
+            });
+
+            ['expRole', 'expCompany', 'expDate', 'expDesc'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            saveData();
+        }
+
+        function deleteExperience(id) {
+            portfolioData.experience = portfolioData.experience.filter(e => e.id !== id);
+            saveData();
+        }
+
+        // Projects
+        function addProject() {
+            const title = document.getElementById('projTitle').value.trim();
+            const slug = document.getElementById('projSlug').value.trim();
+            const desc = document.getElementById('projDesc').value.trim();
+            const fullDesc = document.getElementById('projFullDesc').value.trim();
+            const tech = document.getElementById('projTech').value.split(',').map(t => t.trim()).filter(t => t);
+            const github = document.getElementById('projGithub').value.trim();
+            const live = document.getElementById('projLive').value.trim();
+            const youtube = document.getElementById('projYoutube').value.trim();
+            const hasPage = document.getElementById('projHasPage').checked;
+
+            if (!title || !github) return alert('Title and GitHub URL required');
+            if (portfolioData.projects.some(p => p.slug === slug)) return alert('Slug already exists');
+
+            portfolioData.projects.push({
+                id: Date.now(),
+                title, slug, description: desc, fullDescription: fullDesc || desc,
+                tech, github, live, youtube,
+                featured: currentProject.featured,
+                gallery: [...currentProject.gallery],
+                hasPage,
+                color: 'from-pink-500 to-rose-500'
+            });
+
+            // Reset form
+            ['projTitle', 'projSlug', 'projDesc', 'projFullDesc', 'projTech', 'projGithub', 'projLive', 'projYoutube'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('projHasPage').checked = true;
+            document.getElementById('featuredPreview').innerHTML = `
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                    <p class="text-sm">Click to upload</p>
+                </div>`;
+            document.getElementById('featuredPreview').classList.add('border-dashed');
+            document.getElementById('galleryPreview').innerHTML = '';
+            document.getElementById('featuredSize').textContent = '';
+            currentProject = { featured: null, gallery: [] };
+            
+            saveData();
+        }
+
+        function deleteProject(id) {
+            portfolioData.projects = portfolioData.projects.filter(p => p.id !== id);
+            saveData();
+        }
+
+        // Preview
+        function previewSite() {
+            const html = generateSiteHTML();
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            document.getElementById('preview-frame').src = url;
+            document.getElementById('preview-modal').classList.remove('hidden');
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').classList.add('hidden');
+            document.getElementById('preview-frame').src = '';
+        }
+
+        // DEPLOYMENT
+        function selectDeploy(method, element) {
+            console.log('Selected deploy method:', method);
+            selectedDeployMethod = method;
+            
+            document.querySelectorAll('.hosting-card').forEach(c => c.classList.remove('selected'));
+            if (element) element.classList.add('selected');
+            
+            setTimeout(() => {
+                document.getElementById('deploy-step-1').classList.add('hidden');
+                document.getElementById('deploy-step-2').classList.remove('hidden');
+                document.getElementById('step1').classList.add('step-completed');
+                document.getElementById('step1').innerHTML = '<i class="fas fa-check"></i>';
+                document.getElementById('step2').classList.add('step-active');
+                document.getElementById('step2').classList.remove('border-white/20', 'text-gray-500');
+                
+                generateZip();
+            }, 500);
+        }
+
+        async function generateZip() {
+            const statusEl = document.getElementById('generate-status');
+            const detailEl = document.getElementById('generate-detail');
+            const progressBar = document.getElementById('progress-bar');
+            const errorEl = document.getElementById('generate-error');
+            const errorTextEl = document.getElementById('error-text');
+            const completeEl = document.getElementById('generate-complete');
+            const downloadInfoEl = document.getElementById('download-info');
+            
+            try {
+                console.log('Starting ZIP generation...');
+                detailEl.textContent = 'Initializing...';
+                progressBar.style.width = '10%';
+                
+                if (typeof JSZip === 'undefined') {
+                    throw new Error('JSZip library not loaded. Please refresh the page.');
+                }
+                
+                const zip = new JSZip();
+                
+                detailEl.textContent = 'Generating main page...';
+                progressBar.style.width = '30%';
+                console.log('Generating index.html...');
+                const indexHTML = generateSiteHTML();
+                zip.file("index.html", indexHTML);
+                
+                const projectsWithPages = portfolioData.projects.filter(p => p.hasPage);
+                detailEl.textContent = `Generating ${projectsWithPages.length} project pages...`;
+                progressBar.style.width = '50%';
+                
+                for (let i = 0; i < projectsWithPages.length; i++) {
+                    const project = projectsWithPages[i];
+                    console.log(`Generating ${project.slug}.html...`);
+                    detailEl.textContent = `Generating project ${i + 1}/${projectsWithPages.length}: ${project.title}...`;
+                    const projectHTML = generateProjectPageHTML(project);
+                    zip.file(`${project.slug}.html`, projectHTML);
+                }
+                
+                detailEl.textContent = 'Creating README...';
+                progressBar.style.width = '70%';
+                const readme = `# ${portfolioData.profile.name || 'My'} Portfolio
+
+Generated: ${new Date().toLocaleDateString()}
+Theme: ${currentPalette.name}
+
+## Files
+- index.html (Main page)
+${projectsWithPages.map(p => `- ${p.slug}.html (${p.title})`).join('\n')}
+
+## Deploy
+Upload all files to your web host or use Netlify Drop.
+`;
+                zip.file("README.txt", readme);
+                
+                detailEl.textContent = 'Compressing files...';
+                progressBar.style.width = '90%';
+                console.log('Generating ZIP blob...');
+                
+                const content = await zip.generateAsync({ 
+                    type: "blob",
+                    compression: "DEFLATE",
+                    compressionOptions: { level: 6 }
+                }, function updateCallback(metadata) {
+                    const percent = Math.round(metadata.percent);
+                    detailEl.textContent = `Compressing: ${percent}%`;
+                    progressBar.style.width = `${90 + (percent * 0.1)}%`;
+                });
+                
+                console.log('ZIP generated successfully, size:', content.size);
+                generatedZipBlob = content;
+                
+                progressBar.style.width = '100%';
+                statusEl.classList.add('hidden');
+                errorEl.classList.add('hidden');
+                completeEl.classList.remove('hidden');
+                
+                const sizeMB = (content.size / (1024 * 1024)).toFixed(2);
+                downloadInfoEl.textContent = `File size: ${sizeMB} MB • ${portfolioData.projects.length} projects • Theme: ${currentPalette.name}`;
+                
+            } catch (error) {
+                console.error('Error generating ZIP:', error);
+                statusEl.classList.add('hidden');
+                completeEl.classList.add('hidden');
+                errorEl.classList.remove('hidden');
+                errorTextEl.textContent = error.message || 'Unknown error occurred.';
+            }
+        }
+
+        function downloadSite() {
+            if (!generatedZipBlob) {
+                alert('Error: No ZIP file generated. Please try again.');
+                return;
+            }
+            
+            console.log('Downloading ZIP...');
+            try {
+                if (typeof saveAs === 'undefined') {
+                    // Fallback if FileSaver.js fails
+                    const url = URL.createObjectURL(generatedZipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "my-portfolio-website.zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else {
+                    saveAs(generatedZipBlob, "my-portfolio-website.zip");
+                }
+                console.log('Download triggered successfully');
+            } catch (e) {
+                console.error('Error downloading:', e);
+                alert('Error downloading. Try right-clicking and saving.');
+            }
+        }
+
+        function showStep3() {
+            document.getElementById('deploy-step-2').classList.add('hidden');
+            document.getElementById('deploy-step-3').classList.remove('hidden');
+            document.getElementById('step2').classList.add('step-completed');
+            document.getElementById('step2').innerHTML = '<i class="fas fa-check"></i>';
+            document.getElementById('step3').classList.add('step-active');
+            document.getElementById('step3').classList.remove('border-white/20', 'text-gray-500');
+            
+            document.getElementById('instructions-netlify').classList.add('hidden');
+            document.getElementById('instructions-github').classList.add('hidden');
+            document.getElementById('instructions-download').classList.add('hidden');
+            document.getElementById('instructions-' + selectedDeployMethod).classList.remove('hidden');
+            
+            const names = { netlify: 'Netlify', github: 'GitHub Pages', download: 'Your Web Host' };
+            document.getElementById('platform-name').textContent = names[selectedDeployMethod];
+        }
+
+        function resetDeploy() {
+            document.getElementById('deploy-step-1').classList.remove('hidden');
+            document.getElementById('deploy-step-2').classList.add('hidden');
+            document.getElementById('deploy-step-3').classList.add('hidden');
+            
+            document.getElementById('step1').classList.remove('step-completed');
+            document.getElementById('step1').innerHTML = '1';
+            document.getElementById('step1').classList.add('step-active');
+            
+            document.getElementById('step2').classList.remove('step-completed', 'step-active');
+            document.getElementById('step2').innerHTML = '2';
+            document.getElementById('step2').classList.add('border-white/20', 'text-gray-500');
+            
+            document.getElementById('step3').classList.remove('step-completed', 'step-active');
+            document.getElementById('step3').innerHTML = '3';
+            document.getElementById('step3').classList.add('border-white/20', 'text-gray-500');
+            
+            document.getElementById('generate-status').classList.remove('hidden');
+            document.getElementById('generate-error').classList.add('hidden');
+            document.getElementById('generate-complete').classList.add('hidden');
+            document.getElementById('progress-bar').style.width = '0%';
+            
+            document.querySelectorAll('.hosting-card').forEach(c => c.classList.remove('selected'));
+            
+            generatedZipBlob = null;
+        }
+
+        // Helper: Extract YouTube video ID from various URL formats
+        function getYouTubeEmbedUrl(url) {
+            if (!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+        
+        // Helper: Toggle fullscreen for iframe
+        function toggleFullscreen(iframeId) {
+            const iframe = document.getElementById(iframeId);
+            if (!iframe) return;
+            
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) {
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) {
+                iframe.msRequestFullscreen();
+            }
+        }
+
+        // HTML Generators with Dynamic Colors
+        function generateSiteHTML() {
+            const p = currentPalette;
+            const profile = portfolioData.profile;
+            const name = escapeHtml(profile.name || 'Your Name');
+            const title = escapeHtml(profile.title || 'Professional Title');
+            const bio = escapeHtml(profile.bio || 'Your bio...');
+            const email = escapeHtml(profile.email || '');
+            const linkedin = escapeHtml(profile.linkedin || '');
+            
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${name} - ${title}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: ${p.primary};
+            --secondary: ${p.secondary};
+            --bg-dark: ${p.bgDark};
+            --bg-panel: ${p.bgPanel};
+        }
+        body { background-color: var(--bg-dark); color: #ffffff; font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: var(--bg-panel); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .timeline-line { background: linear-gradient(to bottom, var(--primary), var(--secondary)); }
+        .blob { position: absolute; filter: blur(80px); opacity: 0.4; animation: float 10s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .project-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .project-card:hover { transform: translateY(-10px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .video-container { position: relative; overflow: hidden; }
+        .video-container video { width: 100%; height: 100%; object-fit: cover; }
+        .play-button { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 1; transition: opacity 0.3s; }
+        .project-card:hover .play-button { opacity: 0; }
+        .media-badge { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; background: var(--primary); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="blob w-96 h-96 rounded-full top-0 left-0 -translate-x-1/2 -translate-y-1/2" style="background-color: var(--primary)"></div>
+        <div class="blob w-96 h-96 rounded-full bottom-0 right-0 translate-x-1/2 translate-y-1/2" style="background-color: var(--secondary); animation-delay: 2s;"></div>
+    </div>
+    
+    <nav class="fixed top-0 w-full z-40 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="font-display font-bold text-2xl tracking-tighter">${(name).split(' ')[0].toUpperCase()}<span style="color: var(--primary)">.</span></div>
+            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-300 items-center">
+                <a href="#about" class="hover:text-white transition-colors">About</a>
+                <a href="#experience" class="hover:text-white transition-colors">Experience</a>
+                <a href="#projects" class="hover:text-white transition-colors">Projects</a>
+                <a href="#contact" class="hover:text-white transition-colors">Contact</a>
+                ${linkedin ? `<a href="${linkedin}" target="_blank" class="text-[#0077b5] hover:text-[#0077b5]/80 transition-colors text-lg"><i class="fab fa-linkedin"></i></a>` : ''}
+                ${email ? `<a href="mailto:${email}" class="text-gray-400 hover:text-white transition-colors text-lg"><i class="fas fa-envelope"></i></a>` : ''}
+            </div>
+        </div>
+    </nav>
+
+    <section id="about" class="relative min-h-screen flex items-center justify-center pt-20 px-6">
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+                Hi, I'm <span class="gradient-text">${name}</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 mb-8 font-light">${title}</p>
+            <p class="max-w-2xl mx-auto text-gray-500 text-lg mb-12 leading-relaxed">${bio}</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#projects" class="px-8 py-4 rounded-full font-semibold transition-all transform hover:scale-105 shadow-lg text-white" style="background-color: var(--primary); box-shadow: 0 10px 40px -10px var(--primary);">View Projects</a>
+                <a href="#contact" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-full font-semibold transition-all">Get in Touch</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 px-6 relative">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-display text-4xl font-bold mb-12 text-center">Technical <span class="gradient-text">Skills</span></h2>
+            <div class="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
+                ${portfolioData.skills.map(skill => `<span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-gray-300 hover:border-[var(--primary)] hover:text-white transition-all cursor-default">${escapeHtml(skill)}</span>`).join('') || '<span class="text-gray-500">No skills added</span>'}
+            </div>
+        </div>
+    </section>
+
+    <section id="experience" class="py-20 px-6 relative">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="font-display text-4xl font-bold mb-16 text-center">Work <span class="gradient-text">Experience</span></h2>
+            <div class="relative">
+                <div class="absolute left-0 md:left-1/2 top-0 bottom-0 w-0.5 timeline-line transform md:-translate-x-1/2"></div>
+                ${portfolioData.experience.map((exp, i) => `
+                <div class="relative pl-8 md:pl-0 ${i % 2 === 0 ? 'md:pr-12 md:text-right md:ml-0 md:mr-[50%]' : 'md:pl-12 md:ml-[50%]'} mb-12 group">
+                    <div class="absolute left-0 md:left-1/2 top-0 w-4 h-4 rounded-full border-4 border-[var(--bg-dark)] transform -translate-x-[7px] md:-translate-x-1/2 z-10 group-hover:scale-125 transition-transform" style="background-color: var(--primary)"></div>
+                    <div class="glass-panel p-6 rounded-xl border border-white/10 hover:border-[var(--primary)]/50 transition-all">
+                        <span class="font-semibold text-sm mb-2 block" style="color: var(--primary)">${escapeHtml(exp.date)}</span>
+                        <h3 class="text-xl font-bold mb-1">${escapeHtml(exp.role)}</h3>
+                        <div class="font-medium mb-3" style="color: var(--secondary)">${escapeHtml(exp.company)}</div>
+                        <p class="text-gray-400 text-sm leading-relaxed">${escapeHtml(exp.description)}</p>
+                    </div>
+                </div>`).join('') || '<p class="text-center text-gray-500">No experience added</p>'}
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" class="py-20 px-6 relative">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="font-display text-4xl font-bold mb-4 text-center">Featured <span class="gradient-text">Projects</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${portfolioData.projects.map(proj => {
+                    let mediaContent = '';
+                    let badge = '';
+                    
+                    if (proj.featured) {
+                        if (proj.featured.type === 'video') {
+                            mediaContent = `
+                                <div class="video-container h-full">
+                                    <video src="${proj.featured.data}" muted loop playsinline></video>
+                                    <div class="play-button">
+                                        <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: var(--primary)">
+                                            <i class="fas fa-play text-white ml-1"></i>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            badge = '<span class="media-badge"><i class="fas fa-video mr-1"></i>VIDEO</span>';
+                        } else if (proj.featured.type === 'gif') {
+                            mediaContent = `<img src="${proj.featured.data}" class="w-full h-full object-cover" alt="${escapeHtml(proj.title)}">`;
+                            badge = '<span class="media-badge" style="background-color: var(--secondary)"><i class="fas fa-image mr-1"></i>GIF</span>';
+                        } else {
+                            mediaContent = `<img src="${proj.featured.data}" class="w-full h-full object-cover" alt="${escapeHtml(proj.title)}">`;
+                            badge = '<span class="media-badge bg-[#10B981]"><i class="fas fa-image mr-1"></i>IMG</span>';
+                        }
+                    } else {
+                        mediaContent = `<div class="w-full h-full flex items-center justify-center" style="background: linear-gradient(135deg, var(--primary), var(--secondary))"><i class="fas fa-code text-4xl text-white/50"></i></div>`;
+                    }
+                    
+                    const galleryCount = proj.gallery ? proj.gallery.length : 0;
+                    
+                    return `
+                <div class="project-card glass-panel rounded-2xl overflow-hidden border border-white/10 group cursor-pointer" onclick="window.location.href='${proj.hasPage ? proj.slug + '.html' : proj.github}'">
+                    <div class="h-48 relative overflow-hidden">
+                        ${mediaContent}
+                        ${badge}
+                        ${galleryCount > 0 ? `<span class="media-badge bg-black/70" style="top: 8px; left: 8px; right: auto;"><i class="fas fa-images mr-1"></i>+${galleryCount}</span>` : ''}
+                        <div class="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
+                            ${proj.tech.slice(0, 3).map(t => `<span class="text-xs px-2 py-1 rounded bg-black/50 backdrop-blur-sm text-white">${escapeHtml(t)}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-[var(--primary)] transition-colors">${escapeHtml(proj.title)}</h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">${escapeHtml(proj.description)}</p>
+                        <div class="flex gap-3">
+                            <a href="${proj.github}" target="_blank" onclick="event.stopPropagation()" class="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-center text-sm font-medium transition-all"><i class="fab fa-github mr-2"></i>Code</a>
+                            ${proj.live ? `<a href="${proj.live}" target="_blank" onclick="event.stopPropagation()" class="flex-1 py-2 rounded-lg text-center text-sm font-medium transition-all text-white" style="background-color: var(--primary);"><i class="fas fa-external-link-alt mr-2"></i>Live</a>` : ''}
+                            ${proj.hasPage ? `<span class="flex-1 py-2 rounded-lg border text-center text-sm font-medium text-white" style="background-color: var(--secondary); border-color: var(--secondary);"><i class="fas fa-file-alt mr-2"></i>Details</span>` : ''}
+                        </div>
+                    </div>
+                </div>`}).join('') || '<p class="text-center text-gray-500 col-span-3">No projects added</p>'}
+            </div>
+        </div>
+    </section>
+    
+    <section id="contact" class="py-20 px-6 relative">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="font-display text-4xl font-bold mb-8">Let's Work <span class="gradient-text">Together</span></h2>
+            <div class="glass-panel rounded-2xl p-8 md:p-12 max-w-2xl mx-auto space-y-6">
+                ${email ? `
+                <a href="mailto:${email}" class="inline-block px-8 py-4 text-white font-semibold rounded-full transition-all transform hover:scale-[1.02]" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);">
+                    <i class="fas fa-envelope mr-2"></i>Send Email
+                </a>
+                <div class="flex items-center justify-center gap-3 text-gray-400 text-sm mt-4">
+                    <span>${email}</span>
+                    <button onclick="copyEmail()" class="hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10" title="Copy to clipboard">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Click button to open email app, or copy icon to copy address</p>
+                ` : '<p class="text-gray-500">No email provided</p>'}
+                
+                <div class="flex justify-center gap-4 mt-6">
+                    ${linkedin ? `
+                    <a href="${linkedin}" target="_blank" class="w-14 h-14 rounded-full bg-[#0077b5]/20 hover:bg-[#0077b5]/30 border border-[#0077b5]/30 flex items-center justify-center text-[#0077b5] text-2xl transition-all hover:scale-110">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>` : ''}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-white/10 py-12 px-6 mt-20">
+        <div class="max-w-7xl mx-auto text-center text-gray-500">
+            <p class="font-display text-xl mb-4">${(name).toUpperCase()}.</p>
+            <p class="text-sm">© ${new Date().getFullYear()} ${name}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyEmail() {
+            const email = '${email}';
+            if (!email) return;
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = event.target.closest('button');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = email;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                const btn = event.target.closest('button');
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+        
+        document.querySelectorAll('.project-card').forEach(card => {
+            const video = card.querySelector('video');
+            if (video) {
+                card.addEventListener('mouseenter', () => video.play());
+                card.addEventListener('mouseleave', () => {
+                    video.pause();
+                    video.currentTime = 0;
+                });
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+        }
+
+        function generateProjectPageHTML(project) {
+            const p = currentPalette;
+            const profile = portfolioData.profile;
+            const name = escapeHtml(profile.name || 'PORTFOLIO');
+            const projTitle = escapeHtml(project.title);
+            
+            const featuredMedia = project.featured ? 
+                (project.featured.type === 'video' ? 
+                    `<video src="${project.featured.data}" autoplay muted loop playsinline class="w-full h-full object-cover"></video>` :
+                    `<img src="${project.featured.data}" class="w-full h-full object-cover" alt="${projTitle}">`) :
+                `<div class="w-full h-full" style="background: linear-gradient(135deg, var(--primary), var(--secondary))"></div>`;
+
+            const galleryHTML = project.gallery && project.gallery.length > 0 ? `
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold mb-6" style="color: var(--primary)">Media Gallery</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        ${project.gallery.map(media => {
+                            if (media.type === 'video') {
+                                return `<div class="aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer transition-all hover:opacity-80" onclick="playVideo('${media.data}')" style="border-color: var(--primary);">
+                                    <div class="relative w-full h-full">
+                                        <video src="${media.data}" class="w-full h-full object-cover" muted></video>
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/40">
+                                            <i class="fas fa-play-circle text-4xl text-white/80"></i>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            } else {
+                                return `<div class="aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer transition-all hover:opacity-80" onclick="openLightbox('${media.data}')" style="border-color: var(--primary);">
+                                    <img src="${media.data}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500" alt="">
+                                </div>`;
+                            }
+                        }).join('')}
+                    </div>
+                </section>
+            ` : '';
+
+            const youtubeId = getYouTubeEmbedUrl(project.youtube);
+            const youtubeSection = youtubeId ? `
+                <section class="mb-12">
+                    <h2 class="text-2xl font-bold mb-6" style="color: var(--primary)">Demo Video</h2>
+                    <div class="relative w-full rounded-xl overflow-hidden border border-white/10" style="border-color: var(--primary);">
+                        <div class="aspect-video">
+                            <iframe 
+                                id="yt-player-${project.id}"
+                                src="https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen
+                                class="w-full h-full">
+                            </iframe>
+                        </div>
+                        <button onclick="toggleFullscreen('yt-player-${project.id}')" class="absolute bottom-4 right-4 px-4 py-2 rounded-lg bg-black/70 hover:bg-black/90 text-white text-sm transition-all flex items-center gap-2">
+                            <i class="fas fa-expand"></i> Fullscreen
+                        </button>
+                    </div>
+                </section>
+            ` : '';
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${projTitle} - ${name}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: ${p.primary};
+            --secondary: ${p.secondary};
+            --bg-dark: ${p.bgDark};
+            --bg-panel: ${p.bgPanel};
+        }
+        body { background-color: var(--bg-dark); color: #ffffff; font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: var(--bg-panel); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased">
+    <nav class="glass-panel border-b border-white/10 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="font-display font-bold text-2xl tracking-tighter hover:text-[var(--primary)] transition-colors">← Back to Portfolio</a>
+            <div class="flex gap-4">
+                <a href="${project.github}" target="_blank" class="text-gray-400 hover:text-white transition-colors text-xl"><i class="fab fa-github"></i></a>
+                ${project.live ? `<a href="${project.live}" target="_blank" class="text-gray-400 hover:text-[var(--primary)] transition-colors text-xl"><i class="fas fa-external-link-alt"></i></a>` : ''}
+            </div>
+        </div>
+    </nav>
+
+    <div class="relative h-[60vh] overflow-hidden">
+        ${featuredMedia}
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)] via-transparent to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-8 md:p-16">
+            <div class="max-w-5xl mx-auto">
+                <h1 class="text-5xl md:text-7xl font-bold font-display mb-4">${projTitle}</h1>
+                <div class="flex flex-wrap gap-3">
+                    ${project.tech.map(t => `<span class="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm">${escapeHtml(t)}</span>`).join('')}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-6 py-16">
+        <div class="grid md:grid-cols-3 gap-12">
+            <div class="md:col-span-2 space-y-8">
+                <section>
+                    <h2 class="text-2xl font-bold mb-4" style="color: var(--primary)">Overview</h2>
+                    <p class="text-gray-300 text-lg leading-relaxed">${escapeHtml(project.fullDescription || project.description)}</p>
+                </section>
+                
+                ${youtubeSection}
+                ${galleryHTML}
+            </div>
+            
+            <div class="space-y-8">
+                <div class="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 class="font-bold mb-4">Project Links</h3>
+                    <div class="space-y-3">
+                        <a href="${project.github}" target="_blank" class="flex items-center gap-3 text-gray-300 hover:text-white transition-colors p-3 rounded-lg bg-white/5 hover:bg-white/10">
+                            <i class="fab fa-github text-xl"></i><span>Source Code</span>
+                        </a>
+                        ${project.live ? `
+                        <a href="${project.live}" target="_blank" class="flex items-center gap-3 text-gray-300 hover:text-[var(--primary)] transition-colors p-3 rounded-lg bg-white/5 hover:bg-white/10">
+                            <i class="fas fa-external-link-alt text-xl"></i><span>Live Demo</span>
+                        </a>` : ''}
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 class="font-bold mb-4">Technologies</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${project.tech.map(t => `<span class="px-3 py-1 rounded-lg bg-white/5 text-sm text-gray-300 border border-white/10">${escapeHtml(t)}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-white/10 py-12 px-6 mt-20">
+        <div class="max-w-5xl mx-auto text-center text-gray-500">
+            <p class="font-display text-xl mb-4">${name.toUpperCase()}.</p>
+            <p class="text-sm">© ${new Date().getFullYear()} ${name}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function playVideo(src) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4';
+            modal.innerHTML = \`
+                <button onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-white text-2xl w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+                <video src="\${src}" controls autoplay class="max-w-full max-h-[90vh] rounded-lg"></video>
+            \`;
+            document.body.appendChild(modal);
+        }
+        
+        function openLightbox(src) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4';
+            modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+            modal.innerHTML = \`
+                <button onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-white text-2xl w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center z-10">
+                    <i class="fas fa-times"></i>
+                </button>
+                <img src="\${src}" class="max-w-full max-h-[90vh] object-contain rounded-lg">
+            \`;
+            document.body.appendChild(modal);
+        }
+        
+        function toggleFullscreen(iframeId) {
+            const iframe = document.getElementById(iframeId);
+            if (!iframe) return;
+            if (iframe.requestFullscreen) iframe.requestFullscreen();
+            else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+            else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+        }
+    <\/script>
+</body>
+</html>`;
+        }
+
+        // Import/Export
+        function exportData() {
+            const blob = new Blob([JSON.stringify(portfolioData, null, 2)], { type: 'application/json' });
+            
+            if (typeof saveAs !== 'undefined') {
+                saveAs(blob, 'portfolio-backup.json');
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'portfolio-backup.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (confirm('Replace all data?')) {
+                        portfolioData = data;
+                        if (portfolioData.paletteId) {
+                            const savedPalette = colorPalettes.find(p => p.id === portfolioData.paletteId);
+                            if (savedPalette) {
+                                currentPalette = savedPalette;
+                                applyPalette(savedPalette);
+                            }
+                        }
+                        saveData();
+                        renderPalettes();
+                        alert('Data loaded!');
+                    }
+                } catch (err) {
+                    alert('Invalid file');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        // Initialize
+        init();
+        console.log('Portfolio Builder Ready - Color Edition');
+    </script>
+</body>
+</html>
